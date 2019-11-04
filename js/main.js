@@ -1,34 +1,46 @@
 canvas = document.getElementById("game");
 ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
-ctx.font = "20px Arial";
+ctx.font = "40px Roboto";
 
 // PlayerRectangle = 0
 // FishImage = 1
 var renderList = [];
+var mouseDown = false;
 
-var bumpForce = 6;
+var playetTopMargin = 120, playerBottomMargin = 850;
+var bumpForce = 4;
 var drag = 0.99;
 var gravity = 0.22;
 var bounce = 0.55;
 
-var fishMoveSpeed = 50;
-var fishOffsetBounce = 300;
+var fishMoveSpeed = 70;
 
 var fishingRodWidth = 200;
 
 var progress = 25;
 var inGame = true;
+var newGame = true;
+
+var initialBite = true;
+var waitingForBite = false;
+var biting = false;
+var currentDate = Date.now();
+var shakeCoef = 40;
 
 var PLAYER = "PLAYER";
 var FISH = "FISH";
+var RODFLOAT = "RODFLOAT"
+
 
 var minLoad = 1, loadCount = 0;
 
-canvas.addEventListener("click", clickOnCanvas);
+canvas.addEventListener("mousedown", clickOnCanvas);
+canvas.addEventListener("mouseup", mouseUpHandler);
 
-makeObject(PLAYER, 100, 200, 100, fishingRodWidth, "green");
-makeObject(FISH, 100, 200, 100, 70, "blue");
+renderList.push(makeObject(PLAYER, 380, 200, 100, fishingRodWidth, "green"));
+renderList.push(makeObject(FISH, 380, 200, 100, 70, "blue"));
+renderList.push(makeObject(RODFLOAT, 450, 500, 40, 100, "red"));
 
 renderList[1].image = new Image();
 renderList[1].image.addEventListener('load', loadHandler, false);
@@ -38,63 +50,36 @@ function render()
 {
     ctx.clearRect(0, 0, 1600, 900);
     
-    for(var i = 0; i < renderList.length; i++)
+    if(inGame)
     {
-    obj = renderList[i];
-
-    //move -------------------------
-    if (obj.ID == PLAYER) 
+        fishingGame();
+    }
+    else
     {
-        obj.y -= obj.force;
-        obj.force *= drag;
-        obj.force -= gravity;
+        floatBitting();
     }
-
-    //collide ------------------------------
-    if(obj.ID == PLAYER)
-    {  
-        if(obj.y < 0)
-        {
-            obj.force -= obj.force;
-            obj.y += 4;
-        }
-        else if(obj.y + fishingRodWidth > 900)
-        {
-            if(obj.force < 1.3 && obj.force > -1.3)
-            {
-                obj.force = 0;
-                obj.y = 900 - fishingRodWidth
-            }
-            else
-            {
-                obj.force *= -1;
-                obj.force *= bounce;
-                obj.y -= 1;
-            }
-        }
-    }
-
-    progressUpdate();
-    //draw
-    if(obj.ID == FISH)
-    {
-        ctx.drawImage(obj.image, obj.x + 18, obj.y,64,32);
-    }
-    else 
-    {
-        ctx.fillStyle = obj.color;
-        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
-    }
-    }
+    
     requestAnimationFrame(render);
 }
 
 function clickOnCanvas(e)
 {
-    var playerSq = renderList[0];
-    
-    playerSq.force =+ bumpForce;
+    mouseDown = true;
+
+    if(biting)
+    {
+        newGame = true;
+        inGame = true;
+        dateNow = 0;
+        biting = false;
+    }
 }
+
+function mouseUpHandler(e)
+{
+    mouseDown = false;
+}
+
 
 function makeObject(ID, x, y, width, height, color)
 {
@@ -108,36 +93,55 @@ function makeObject(ID, x, y, width, height, color)
     obj.force = 0;
     obj.color = color;
 
-    if(ID == FISH)
+    if(ID == FISH || ID == RODFLOAT)
     {
-        obj.pointToMove = null;
-        
+        if (ID == FISH)
+        {
+            obj.fishOffsetBounce = 200;
+            obj.pointToMove = null;
+            obj.weight = getRandomNum(0.5, 3.5);
+            obj.moveMin = playetTopMargin;
+            obj.moveMax = playerBottomMargin;
+            obj.fishMoveSpeed = 70;
+        }
+
+        if(ID == RODFLOAT)
+        {
+            obj.fishOffsetBounce = 80;
+            obj.pointToMove = 500;
+            obj.weight = 1.2;
+            obj.moveMin = 450;
+            obj.moveMax = 550;
+            obj.objMoveSpeed = 40;
+            obj.floatAtDeafult = false;
+        }
+
         obj.getNewPoint = function()
         {
             if(this.pointToMove == null)
             {
-                this.pointToMove = getRandomNum(10,890);
+                this.pointToMove = getRandomNum(this.moveMin,this.moveMax);
             }
             
             var topOffset, bottomOffset;
 
-            if(this.y - fishOffsetBounce < 10)
+            if(this.y - this.fishOffsetBounce * this.weight < this.moveMin)
             {
-                topOffset = 10;
+                topOffset = this.moveMin;
             }
             else
             {
-                topOffset = this.y - fishOffsetBounce;
+                topOffset = this.y - this.fishOffsetBounce * this.weight;
             }
 
             
-            if(this.y + fishOffsetBounce > 890)
+            if(this.y + this.fishOffsetBounce * this.weight > this.moveMax)
             {
-                bottomOffset = 890
+                bottomOffset = this.moveMax;
             }
             else
             {
-                bottomOffset = this.y + fishOffsetBounce;
+                bottomOffset = this.y + this.fishOffsetBounce * this.weight;
             }
 
             this.pointToMove = getRandomNum(bottomOffset, topOffset);
@@ -146,14 +150,18 @@ function makeObject(ID, x, y, width, height, color)
 
         obj.isPointReached = function()
         {
-            if(this.y > this.pointToMove - 6 && this.y < this.pointToMove + 6)
+            if(this.y > this.pointToMove - 6 * (this.weight * 0.6) && this.y < this.pointToMove + 6 * (this.weight * 0.6))
             {
-                this.getNewPoint();
+                return true;
             }
+            
+            return false;
         }
 
         obj.moveToPoint = function()
         {
+            //fishMoveSpeed *= this.weight;
+
             var distanceLeft = Math.abs(this.pointToMove - this.y); 
             
             var speed = distanceLeft / fishMoveSpeed;
@@ -170,9 +178,14 @@ function makeObject(ID, x, y, width, height, color)
             this.isPointReached();
 
         }
+        
+        obj.getNewWeight = function()
+        {
+            this.weight = getRandomNum(1,3);
+        }
     }
 
-    renderList.push(obj);
+    return obj;
 }
 
 function loadHandler(e) {
@@ -208,32 +221,206 @@ function progressUpdate()
         }
         else
         {
-            fish.moveToPoint();
+            if(fish.isPointReached())
+            {
+                fish.getNewPoint()
+            }
+            else
+            {
+                fish.moveToPoint();
+            }
         }
         
         if(progress > 100)
         {
+            renderList[2].y = 500;
+            newGame = true;
             inGame = false;
+            waitingForBite = false;
         }
     }
 
     if(progress < 0)
     {
+        renderList[2].y = 500;
+        newGame = true;
         inGame = false;
+        waitingForBite = false;
         progress = 0;
     }
     else if(progress > 100)
     {
         progress = 100;
         inGame = false;
+        waitingForBite = false;
     }
 
-    ctx.fillText(Math.floor(progress), 300, 50);
+    ctx.fillText(Math.floor(progress), 410, 40);
     
     ctx.beginPath()
     ctx.lineWidth = 2;
-    ctx.rect(300,50, 500, 50);
+    ctx.rect(50,50, 800, 50);
     ctx.stroke();
 
-    ctx.fillRect(300, 50,  500 * progress / 100, 50);
+    ctx.fillRect(50, 50,  800 * progress / 100, 50);
 }
+
+function fishingGame()
+{
+    if(newGame == true){
+        newGame = false;
+        renderList[1].getNewWeight();
+        console.log(renderList[1].weight);
+        inGame = true;
+        progress = 25;
+    }
+
+    for (var i = 0; i < 2; i++)
+    {
+        obj = renderList[i];
+
+        //move -------------------------
+        if (obj.ID == PLAYER) 
+        {
+            obj.y -= obj.force;
+            obj.force *= drag;
+            obj.force -= gravity;
+        }
+        //collide ------------------------------
+
+        if (obj.ID == PLAYER)
+        {
+            if(mouseDown)
+            {
+                obj.force =+ bumpForce;
+            }
+
+            if (obj.y < playetTopMargin)
+            {
+                obj.force = -Math.abs(obj.force);
+            }
+            else if (obj.y + fishingRodWidth > playerBottomMargin)
+            {
+               obj.force = Math.abs(obj.force);
+            }
+        }
+
+        progressUpdate();
+
+        //draw
+        if (obj.ID == FISH)
+        {
+            ctx.drawImage(obj.image, obj.x + 18, obj.y, 64, 32);
+        }
+        else 
+        {
+            ctx.fillStyle = obj.color;
+            ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+
+            ctx.beginPath()
+            ctx.lineWidth = 2;
+            ctx.rect(380, playetTopMargin, 100, playerBottomMargin - playetTopMargin);
+            ctx.stroke();
+        }
+    }
+}
+
+var bittingStartTime;
+var bitingDuration;
+var waitTimeTillBite;
+renderList[2].floatSineCounter = 0;
+function floatBitting()
+{
+    rF = renderList[2];
+
+    rF.floatSineCounter += 0.03;
+
+    if (!waitingForBite)
+    {
+        waitTimeTillBite = getRandomNum(4, 8) * 1000;
+        currentDate = Date.now() + waitTimeTillBite;
+        waitingForBite = true;
+        initialBite = true;
+    }
+
+    if (currentDate + waitTimeTillBite < Date.now())
+    {
+        waitingForBite = false;
+        if (initialBite)
+        {
+            initialBite = false;
+            bitingDuration = getRandomNum(1.5, 3) * 1000;
+            bittingStartTime = bitingDuration + Date.now();
+        }
+    }
+
+    if (bittingStartTime + bitingDuration > Date.now())
+    {
+        console.log("bittinmg");
+        biting = true;
+    }
+    else
+    {
+        console.log("NOOOOT BITTING");
+        biting = false;
+    }
+
+    if (biting)
+    {
+        rF.weight = 5;
+        rF.objMoveSpeed = 10;
+        rF.moveMax = 620;
+        rF.moveMin = 500;
+        rF.fishOffsetBounce = 100;
+
+        if (rF.pointToMove == null) 
+        {
+            rF.getNewPoint();
+        }
+        else
+        {
+            if (rF.isPointReached())
+            {
+                rF.getNewPoint()
+            }
+            else
+            {
+                rF.moveToPoint();
+            }
+        }
+        console.log("BITTTING");
+        rF.floatAtDeafult = false;
+    }
+    else
+    {
+        rF.weight = 3;
+        rF.objMoveSpeed = 60;
+
+        if(!rF.floatAtDeafult)
+        {
+            rF.pointToMove = 500;
+            rF.moveToPoint();
+        }
+     
+        if(rF.isPointReached() && !rF.floatAtDeafult)
+        {
+            rF.floatAtDeafult = true;
+        }
+
+        if(rF.floatAtDeafult)
+        {
+            rF.y += Math.sin(rF.floatSineCounter) / 4.2;
+            rF.moveToPoint();
+        }
+       
+    }
+
+    ctx.fillStyle = rF.color;
+    ctx.fillRect(rF.x, rF.y, rF.width, rF.height);
+
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = "#6bd5ff";
+    ctx.fillRect(0, 550, 1600, 600);
+    ctx.globalAlpha = 1;
+}
+
