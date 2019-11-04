@@ -33,18 +33,41 @@ var FISH = "FISH";
 var RODFLOAT = "RODFLOAT"
 
 
-var minLoad = 1, loadCount = 0;
+var minLoad = 4, loadCount = 0;
 
 canvas.addEventListener("mousedown", clickOnCanvas);
 canvas.addEventListener("mouseup", mouseUpHandler);
 
 renderList.push(makeObject(PLAYER, 380, 200, 100, fishingRodWidth, "green"));
 renderList.push(makeObject(FISH, 380, 200, 100, 70, "blue"));
-renderList.push(makeObject(RODFLOAT, 450, 500, 40, 100, "red"));
+renderList.push(makeObject(RODFLOAT, 450, 500, 6, 58, "red"));
 
 renderList[1].image = new Image();
 renderList[1].image.addEventListener('load', loadHandler, false);
 renderList[1].image.src = "images/fish.png";
+
+renderList[2].image = new Image();
+renderList[2].image.addEventListener('load', loadHandler, false);
+renderList[2].image.src = "images/float.png";
+
+renderList[3] = {
+    x: 0,
+    y: 460,
+};
+renderList[3].image = new Image();
+renderList[3].image.addEventListener('load', loadHandler, false);
+renderList[3].image.src = "images/underwater.png";
+
+renderList[4] = {
+    x: 0,
+    y: 460,
+};
+renderList[4].image = new Image();
+renderList[4].image.addEventListener('load', loadHandler, false);
+renderList[4].image.src = "images/uWtrGradient.png";
+
+
+
 
 function render()
 {
@@ -99,7 +122,7 @@ function makeObject(ID, x, y, width, height, color)
         {
             obj.fishOffsetBounce = 200;
             obj.pointToMove = null;
-            obj.weight = getRandomNum(0.5, 3.5);
+            obj.weight = getRandomNum(1, 4.2);
             obj.moveMin = playetTopMargin;
             obj.moveMax = playerBottomMargin;
             obj.fishMoveSpeed = 70;
@@ -108,7 +131,7 @@ function makeObject(ID, x, y, width, height, color)
         if(ID == RODFLOAT)
         {
             obj.fishOffsetBounce = 80;
-            obj.pointToMove = 500;
+            obj.pointToMove = 430;
             obj.weight = 1.2;
             obj.moveMin = 450;
             obj.moveMax = 550;
@@ -233,7 +256,7 @@ function progressUpdate()
         
         if(progress > 100)
         {
-            renderList[2].y = 500;
+            renderList[2].y = 450;
             newGame = true;
             inGame = false;
             waitingForBite = false;
@@ -242,7 +265,7 @@ function progressUpdate()
 
     if(progress < 0)
     {
-        renderList[2].y = 500;
+        renderList[2].y = 450;
         newGame = true;
         inGame = false;
         waitingForBite = false;
@@ -332,8 +355,12 @@ renderList[2].floatSineCounter = 0;
 function floatBitting()
 {
     rF = renderList[2];
+    wtrBg = renderList[3];
 
     rF.floatSineCounter += 0.03;
+
+    ctx.fillStyle = "#007697";
+    ctx.fillRect(wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
 
     if (!waitingForBite)
     {
@@ -369,8 +396,8 @@ function floatBitting()
     {
         rF.weight = 5;
         rF.objMoveSpeed = 10;
-        rF.moveMax = 620;
-        rF.moveMin = 500;
+        rF.moveMax = 600;
+        rF.moveMin = 440;
         rF.fishOffsetBounce = 100;
 
         if (rF.pointToMove == null) 
@@ -398,7 +425,7 @@ function floatBitting()
 
         if(!rF.floatAtDeafult)
         {
-            rF.pointToMove = 500;
+            rF.pointToMove = 425;
             rF.moveToPoint();
         }
      
@@ -415,12 +442,17 @@ function floatBitting()
        
     }
 
-    ctx.fillStyle = rF.color;
-    ctx.fillRect(rF.x, rF.y, rF.width, rF.height);
+    ctx.drawImage(rF.image, rF.x, rF.y, rF.width * 3.2, rF.height * 3.2);
 
+    /*
     ctx.globalAlpha = 0.8;
-    ctx.fillStyle = "#6bd5ff";
-    ctx.fillRect(0, 550, 1600, 600);
+    ctx.fillStyle = "#007697";
+    ctx.fillRect(0, 540, 1600, 600);
     ctx.globalAlpha = 1;
+    */
+    ctx.drawImage(wtrBg.image, wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
+
+    var grd = renderList[4];
+    ctx.drawImage(grd.image, grd.x, grd.y + 80, grd.image.width * 5, grd.image.height * 5);
 }
 
