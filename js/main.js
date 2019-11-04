@@ -66,13 +66,14 @@ renderList[4].image = new Image();
 renderList[4].image.addEventListener('load', loadHandler, false);
 renderList[4].image.src = "images/uWtrGradient.png";
 
-
+var coin = new Audio('sounds/coin.wav');
 
 
 function render()
 {
     ctx.clearRect(0, 0, 1600, 900);
-    
+    player = renderList[0];
+
     if(inGame)
     {
         fishingGame();
@@ -80,6 +81,31 @@ function render()
     else
     {
         floatBitting();
+        
+        if (!(player.money == player.moneyDisplayed))
+        {
+            player.moneyAdd = Math.abs(player.money - player.moneyDisplayed) / 35;
+
+            if(player.moneyAdd < 0.009)
+            {
+                player.moneyDisplayed = player.money;
+                player.moneyAdd = 0;
+            }
+
+            if (player.money < player.moneyDisplayed)
+            {
+                player.moneyDisplayed -= player.moneyAdd;
+            }
+            else if (player.money > player.moneyDisplayed)
+            {
+                player.moneyDisplayed += player.moneyAdd;
+                coin.play();
+                var newAudio = coin.cloneNode();
+                newAudio.play();
+            }
+        }
+        ctx.fillText("Money: " + Math.floor((player.moneyDisplayed / 10) * 100) / 100, 20, 50);
+        console.log(player.money + " Money ------- Displayed money: " + player.moneyDisplayed);
     }
     
     requestAnimationFrame(render);
@@ -115,6 +141,14 @@ function makeObject(ID, x, y, width, height, color)
     obj.height = height;
     obj.force = 0;
     obj.color = color;
+
+    if(ID == PLAYER)
+    {
+        obj.money = 0;
+        obj.moneyDisplayed = 0;
+        obj.profitCoef = 25;
+        obj.moneyAdd = 0;
+    }
 
     if(ID == FISH || ID == RODFLOAT)
     {
@@ -260,6 +294,7 @@ function progressUpdate()
             newGame = true;
             inGame = false;
             waitingForBite = false;
+            player.money += Math.floor(fish.weight * player.profitCoef * 100) / 100;
         }
     }
 
