@@ -67,6 +67,7 @@ renderList[4].image.addEventListener('load', loadHandler, false);
 renderList[4].image.src = "images/uWtrGradient.png";
 
 var coin = new Audio('sounds/coin.wav');
+coin.volume = 0.5;
 
 
 function render()
@@ -84,9 +85,9 @@ function render()
         
         if (!(player.money == player.moneyDisplayed))
         {
-            player.moneyAdd = Math.abs(player.money - player.moneyDisplayed) / 35;
+            player.moneyAdd = Math.abs(player.money - player.moneyDisplayed) / 60;
 
-            if(player.moneyAdd < 0.009)
+            if(player.moneyAdd < 0.00009)
             {
                 player.moneyDisplayed = player.money;
                 player.moneyAdd = 0;
@@ -98,10 +99,16 @@ function render()
             }
             else if (player.money > player.moneyDisplayed)
             {
+                console.log(Math.floor(player.moneyDisplayed) % 1);
+
+                if(Math.floor(player.moneyDisplayed) % 4 == 0)
+                {
+                    var newCoin = coin.cloneNode();
+                    newCoin.volume = 0.5;
+                    newCoin.play();
+                }
+
                 player.moneyDisplayed += player.moneyAdd;
-                coin.play();
-                var newAudio = coin.cloneNode();
-                newAudio.play();
             }
         }
         ctx.fillText("Money: " + Math.floor((player.moneyDisplayed / 10) * 100) / 100, 20, 50);
