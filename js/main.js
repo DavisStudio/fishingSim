@@ -8,6 +8,14 @@ ctx.font = "40px Roboto";
 var renderList = [];
 var mouseDown = false;
 
+var buttonList = [];
+buttonList.push(newButton(10,10,200,200,test));
+
+function test()
+{
+    console.log("click");
+}
+
 var playetTopMargin = 120, playerBottomMargin = 850;
 var bumpForce = 4;
 var drag = 0.99;
@@ -69,7 +77,6 @@ renderList[4].image.src = "images/uWtrGradient.png";
 var coin = new Audio('sounds/coin.wav');
 coin.volume = 0.5;
 
-
 function render()
 {
     ctx.clearRect(0, 0, 1600, 900);
@@ -112,9 +119,9 @@ function render()
             }
             else if (player.money > player.moneyDisplayed)
             {
-                console.log(Math.floor(player.moneyDisplayed) % 1);
+                //console.log(Math.floor(player.moneyDisplayed) % 1);
 
-                console.log(Math.floor(player.moneyAdd * 1000) / 1000);
+                //console.log(Math.floor(player.moneyAdd * 1000) / 1000);
                 if(Math.floor(player.moneyAdd * 1000) / 1000 % 0.01 == 0)
                 {
                     var newCoin = coin.cloneNode();
@@ -135,12 +142,27 @@ function render()
     console.log(player.money + " Money ------- Displayed money: " + player.moneyDisplayed);
     }
     
+    var b = buttonList[0];
+    ctx.fillRect(b.x,b.y,b.width,b.height);
+
     requestAnimationFrame(render);
 }
 
 function clickOnCanvas(e)
 {
     mouseDown = true;
+
+    var but = buttonList[0];
+    var mouseX = e.clientX - canvas.offsetLeft;
+    var mouseY = e.clientY - canvas.offsetTop;
+
+    if(but.isClicked(mouseX, mouseY))
+    {
+        console.log("click");
+    }else
+    {
+        console.log("miss");
+    }
 
     if(biting)
     {
@@ -445,12 +467,12 @@ function floatBitting()
 
     if (bittingStartTime + bitingDuration > Date.now())
     {
-        console.log("bittinmg");
+        //console.log("bittinmg");
         biting = true;
     }
     else
     {
-        console.log("NOOOOT BITTING");
+        //console.log("NOOOOT BITTING");
         biting = false;
     }
 
@@ -477,7 +499,7 @@ function floatBitting()
                 rF.moveToPoint();
             }
         }
-        console.log("BITTTING");
+        //console.log("BITTTING");
         rF.floatAtDeafult = false;
     }
     else
@@ -505,3 +527,27 @@ function floatBitting()
     }
 }
 
+function newButton(x, y, width, height, onClickFunc)
+{
+    var butt = {};
+    
+    butt.x = x;
+    butt.y = y;
+    butt.width = width;
+    butt.height = height;
+
+    butt.isClicked = function(mouseX, mouseY)
+    {
+        if((mouseX > this.x && mouseX < this.x + this.width)
+            && (mouseY > this.y && mouseY < this.y + this.height))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    return butt;
+}
