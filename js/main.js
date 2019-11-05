@@ -74,9 +74,22 @@ function render()
 {
     ctx.clearRect(0, 0, 1600, 900);
     player = renderList[0];
+    var grd = renderList[4];
+    var wtrBg = renderList[3];
 
     if(inGame)
     {
+        ctx.fillStyle = "#007697";
+        ctx.fillRect(wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
+
+        ctx.drawImage(wtrBg.image, wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
+        ctx.drawImage(grd.image, grd.x, grd.y + 80, grd.image.width * 5, grd.image.height * 5);
+
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = "white";
+        ctx.fillRect(20,20, canvas.width - 40, canvas.height - 40);
+        ctx.globalAlpha = 1;
+
         fishingGame();
     }
     else
@@ -87,7 +100,7 @@ function render()
         {
             player.moneyAdd = Math.abs(player.money - player.moneyDisplayed) / 60;
 
-            if(player.moneyAdd < 0.00009)
+            if(player.moneyAdd < 0.0009)
             {
                 player.moneyDisplayed = player.money;
                 player.moneyAdd = 0;
@@ -101,7 +114,8 @@ function render()
             {
                 console.log(Math.floor(player.moneyDisplayed) % 1);
 
-                if(Math.floor(player.moneyDisplayed) % 4 == 0)
+                console.log(Math.floor(player.moneyAdd * 1000) / 1000);
+                if(Math.floor(player.moneyAdd * 1000) / 1000 % 0.01 == 0)
                 {
                     var newCoin = coin.cloneNode();
                     newCoin.volume = 0.5;
@@ -111,8 +125,14 @@ function render()
                 player.moneyDisplayed += player.moneyAdd;
             }
         }
-        ctx.fillText("Money: " + Math.floor((player.moneyDisplayed / 10) * 100) / 100, 20, 50);
-        console.log(player.money + " Money ------- Displayed money: " + player.moneyDisplayed);
+       
+    ctx.drawImage(rF.image, rF.x, rF.y, rF.width * 3.2, rF.height * 3.2);
+    ctx.drawImage(wtrBg.image, wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
+
+    ctx.drawImage(grd.image, grd.x, grd.y + 80, grd.image.width * 5, grd.image.height * 5);
+
+    ctx.fillText("Money: " + Math.floor((player.moneyDisplayed / 10) * 100) / 100, 20, 50);
+    console.log(player.money + " Money ------- Displayed money: " + player.moneyDisplayed);
     }
     
     requestAnimationFrame(render);
@@ -483,18 +503,5 @@ function floatBitting()
         }
        
     }
-
-    ctx.drawImage(rF.image, rF.x, rF.y, rF.width * 3.2, rF.height * 3.2);
-
-    /*
-    ctx.globalAlpha = 0.8;
-    ctx.fillStyle = "#007697";
-    ctx.fillRect(0, 540, 1600, 600);
-    ctx.globalAlpha = 1;
-    */
-    ctx.drawImage(wtrBg.image, wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
-
-    var grd = renderList[4];
-    ctx.drawImage(grd.image, grd.x, grd.y + 80, grd.image.width * 5, grd.image.height * 5);
 }
 
