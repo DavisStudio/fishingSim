@@ -10,10 +10,10 @@ var mouseDown = false;
 
 var buttonList = [];
 
-buttonList.push(newButton("3",50,200,200,50,test));
-buttonList.push(newButton("3",150,400,50,10,test1));
-buttonList.push(newButton("3",300,400,70,10,test2));
-buttonList.push(newButton("BITE",0, 450, canvas.width,500, test2));
+buttonList.push(newButton("3",50,100,200,300,"buttto12345", test));
+buttonList.push(newButton("3",200,300,300,105,"Button2 Button2 dd ww wdw", test1));
+buttonList.push(newButton("3",350,50,500,110, "Button3", test2));
+buttonList.push(newButton("BITE",0, 450, canvas.width,500,"", test2));
 
 function test()
 {
@@ -454,13 +454,22 @@ var bittingStartTime;
 var bitingDuration;
 var waitTimeTillBite;
 renderList[2].floatSineCounter = 0;
+
 function floatBitting()
 {
     for (var f = 0; f < buttonList.length; f++)
     {
         var b = buttonList[f];
-        b.drawButon(20, 20, "rgba(10, 100, 213, 1)", 0.5);
-        //ctx.fillRect(b.x, b.y, b.width, b.height);
+        //radius, stroke, fillColor, strokeColor, invisible
+        
+        if(b.ID == "BITE")
+        {
+        b.drawButon(20, 1, "0", "0", true, "");
+        }
+        else
+        {
+            b.drawButon(30,5,"#4dd1b5","#36b59a", false);
+        }
     }
 
     rF = renderList[2];
@@ -552,7 +561,7 @@ function floatBitting()
     }
 }
 
-function newButton(ID,x, y, width, height, onClickFunc)
+function newButton(ID,x, y, width, height, text, onClickFunc)
 {
     var butt = {};
     
@@ -561,6 +570,7 @@ function newButton(ID,x, y, width, height, onClickFunc)
     butt.y = y;
     butt.width = width;
     butt.height = height;
+    butt.text = text;
     butt.onClickFunc = onClickFunc;
 
     butt.isClicked = function(mouseX, mouseY)
@@ -577,18 +587,50 @@ function newButton(ID,x, y, width, height, onClickFunc)
     }
 
     // http://jsfiddle.net/robhawkes/gHCJt/
-    butt.drawButon = function(radius, stroke, color, opacity)
+    //https://grtcalculator.com/math/
+    butt.drawButon = function(radius, stroke, fillColor, strokeColor, invisible)
     {
         ctx.save();
-        ctx.globalAlpha = opacity;
+
+        if(invisible)
+        {
+            ctx.globalAlpha = 0;
+        }
+        else
+        {
+            ctx.globalAlpha = 1;
+        }
+
         ctx.lineJoin = "round";
         ctx.lineWidth = stroke;
-        ctx.fillStyle = color;
-        ctx.strokeStyle = color;
+        ctx.fillStyle = fillColor;
+        ctx.strokeStyle = strokeColor;
+
+        var sidePadding = this.width / 6;
+        var textSpace = this.width - sidePadding;
+        var fontSize;
+
+        if (this.text.length > 0)
+        {
+            var wC = textSpace / this.text.length;
+            fontSize = wC * 2.04;
+            ctx.font = fontSize + "px Roboto";
+        }
+
+        this.height = fontSize * 2.5;
+
 
         ctx.strokeRect((this.x + radius/2), this.y+(radius/2), this.width - radius, this.height - radius);
-        //ctx.fillRect(this.x+(radius/2), this.y+(radius/2), this.width - radius, this.height - radius);
+        ctx.fillRect(this.x+(radius/2), this.y+(radius/2), this.width - radius, this.height - radius);
         
+        ctx.fillStyle = "black";
+        ctx.fillText(this.text, this.x + sidePadding / 2, this.y + fontSize * 1.625);
+
+        if(this.text == "Button2 Button2")
+        {
+            console.log(fontSize);
+        }
+
         ctx.restore();
     }
 
