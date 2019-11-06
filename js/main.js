@@ -9,11 +9,25 @@ var renderList = [];
 var mouseDown = false;
 
 var buttonList = [];
-buttonList.push(newButton(10,10,200,200,test));
+
+buttonList.push(newButton("3",50,200,200,50,test));
+buttonList.push(newButton("3",150,400,50,10,test1));
+buttonList.push(newButton("3",300,400,70,10,test2));
+buttonList.push(newButton("BITE",0, 450, canvas.width,500, test2));
 
 function test()
 {
-    console.log("click");
+    console.log("button1");
+}
+
+function test1()
+{
+    console.log("button2");
+}
+
+function test2()
+{
+    console.log("button3");
 }
 
 var playetTopMargin = 120, playerBottomMargin = 850;
@@ -141,9 +155,6 @@ function render()
     ctx.fillText("Money: " + Math.floor((player.moneyDisplayed / 10) * 100) / 100, 20, 50);
     console.log(player.money + " Money ------- Displayed money: " + player.moneyDisplayed);
     }
-    
-    var b = buttonList[0];
-    ctx.fillRect(b.x,b.y,b.width,b.height);
 
     requestAnimationFrame(render);
 }
@@ -152,24 +163,31 @@ function clickOnCanvas(e)
 {
     mouseDown = true;
 
-    var but = buttonList[0];
     var mouseX = e.clientX - canvas.offsetLeft;
     var mouseY = e.clientY - canvas.offsetTop;
 
-    if(but.isClicked(mouseX, mouseY))
-    {
-        console.log("click");
-    }else
-    {
-        console.log("miss");
-    }
+    if (!inGame)
+    {   
+        for (var f = 0; f < buttonList.length; f++)
+        {
+            but = buttonList[f];
 
-    if(biting)
-    {
-        newGame = true;
-        inGame = true;
-        dateNow = 0;
-        biting = false;
+            if (but.isClicked(mouseX, mouseY))
+            {
+                but.onClickFunc();
+            } 
+            
+            if(biting)
+            {
+                if(but.ID = "BITE" && but.isClicked(mouseX,mouseY))
+                {
+                newGame = true;
+                inGame = true;
+                dateNow = 0;
+                biting = false;
+                }
+            }
+        }
     }
 }
 
@@ -438,6 +456,13 @@ var waitTimeTillBite;
 renderList[2].floatSineCounter = 0;
 function floatBitting()
 {
+    for (var f = 0; f < buttonList.length; f++)
+    {
+        var b = buttonList[f];
+        b.drawButon(20, 20, "rgba(10, 100, 213, 1)", 0.5);
+        //ctx.fillRect(b.x, b.y, b.width, b.height);
+    }
+
     rF = renderList[2];
     wtrBg = renderList[3];
 
@@ -527,14 +552,16 @@ function floatBitting()
     }
 }
 
-function newButton(x, y, width, height, onClickFunc)
+function newButton(ID,x, y, width, height, onClickFunc)
 {
     var butt = {};
     
+    butt.ID = ID;
     butt.x = x;
     butt.y = y;
     butt.width = width;
     butt.height = height;
+    butt.onClickFunc = onClickFunc;
 
     butt.isClicked = function(mouseX, mouseY)
     {
@@ -547,6 +574,22 @@ function newButton(x, y, width, height, onClickFunc)
         {
             return false;
         }
+    }
+
+    // http://jsfiddle.net/robhawkes/gHCJt/
+    butt.drawButon = function(radius, stroke, color, opacity)
+    {
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.lineJoin = "round";
+        ctx.lineWidth = stroke;
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+
+        ctx.strokeRect((this.x + radius/2), this.y+(radius/2), this.width - radius, this.height - radius);
+        //ctx.fillRect(this.x+(radius/2), this.y+(radius/2), this.width - radius, this.height - radius);
+        
+        ctx.restore();
     }
 
     return butt;
