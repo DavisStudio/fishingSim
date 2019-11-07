@@ -10,24 +10,12 @@ var mouseDown = false;
 
 var buttonList = [];
 
-buttonList.push(newButton("3",50,100,200,300,"buttto12345", test));
-buttonList.push(newButton("3",200,300,300,105,"Button2 Button2 dd ww wdw", test1));
-buttonList.push(newButton("3",350,50,500,110, "Button3", test2));
-buttonList.push(newButton("BITE",0, 450, canvas.width,500,"", test2));
-
-function test()
-{
-    console.log("button1");
-}
-
-function test1()
-{
-    console.log("button2");
-}
-
-function test2()
-{
-    console.log("button3");
+var shop = {
+    deafultPrice: 5,
+    priceCoef: 1.2,
+    baitBought: 1,
+    rodBought: 1,
+    lineBought: 1
 }
 
 var playetTopMargin = 120, playerBottomMargin = 850;
@@ -63,6 +51,14 @@ canvas.addEventListener("mouseup", mouseUpHandler);
 renderList.push(makeObject(PLAYER, 380, 200, 100, fishingRodWidth, "green"));
 renderList.push(makeObject(FISH, 380, 200, 100, 70, "blue"));
 renderList.push(makeObject(RODFLOAT, 450, 500, 6, 58, "red"));
+
+buttonList.push(newButton("ROD",50,100,120,70,"Buy", buyRod));
+buttonList.push(newButton("BAIT",50,190,120,70,"Buy", buyBait));
+buttonList.push(newButton("LINE",50,280,120,70,"Buy", buyLine));
+buttonList.push(newButton("BITE",0, 450, canvas.width, 500," ", function(){
+    console.log("bait");
+}));
+
 
 renderList[1].image = new Image();
 renderList[1].image.addEventListener('load', loadHandler, false);
@@ -176,7 +172,7 @@ function clickOnCanvas(e)
             {
                 but.onClickFunc();
             } 
-            
+
             if(biting)
             {
                 if(but.ID = "BITE" && but.isClicked(mouseX,mouseY))
@@ -194,122 +190,6 @@ function clickOnCanvas(e)
 function mouseUpHandler(e)
 {
     mouseDown = false;
-}
-
-
-function makeObject(ID, x, y, width, height, color)
-{
-    var obj = {}
-
-    obj.ID = ID;
-    obj.x = x;
-    obj.y = y;
-    obj.width = width;
-    obj.height = height;
-    obj.force = 0;
-    obj.color = color;
-
-    if(ID == PLAYER)
-    {
-        obj.money = 0;
-        obj.moneyDisplayed = 0;
-        obj.profitCoef = 25;
-        obj.moneyAdd = 0;
-    }
-
-    if(ID == FISH || ID == RODFLOAT)
-    {
-        if (ID == FISH)
-        {
-            obj.fishOffsetBounce = 200;
-            obj.pointToMove = null;
-            obj.weight = getRandomNum(1, 4.2);
-            obj.moveMin = playetTopMargin;
-            obj.moveMax = playerBottomMargin;
-            obj.fishMoveSpeed = 70;
-        }
-
-        if(ID == RODFLOAT)
-        {
-            obj.fishOffsetBounce = 80;
-            obj.pointToMove = 430;
-            obj.weight = 1.2;
-            obj.moveMin = 450;
-            obj.moveMax = 550;
-            obj.objMoveSpeed = 40;
-            obj.floatAtDeafult = false;
-        }
-
-        obj.getNewPoint = function()
-        {
-            if(this.pointToMove == null)
-            {
-                this.pointToMove = getRandomNum(this.moveMin,this.moveMax);
-            }
-            
-            var topOffset, bottomOffset;
-
-            if(this.y - this.fishOffsetBounce * this.weight < this.moveMin)
-            {
-                topOffset = this.moveMin;
-            }
-            else
-            {
-                topOffset = this.y - this.fishOffsetBounce * this.weight;
-            }
-
-            
-            if(this.y + this.fishOffsetBounce * this.weight > this.moveMax)
-            {
-                bottomOffset = this.moveMax;
-            }
-            else
-            {
-                bottomOffset = this.y + this.fishOffsetBounce * this.weight;
-            }
-
-            this.pointToMove = getRandomNum(bottomOffset, topOffset);
-
-        }
-
-        obj.isPointReached = function()
-        {
-            if(this.y > this.pointToMove - 6 * (this.weight * 0.6) && this.y < this.pointToMove + 6 * (this.weight * 0.6))
-            {
-                return true;
-            }
-            
-            return false;
-        }
-
-        obj.moveToPoint = function()
-        {
-            //fishMoveSpeed *= this.weight;
-
-            var distanceLeft = Math.abs(this.pointToMove - this.y); 
-            
-            var speed = distanceLeft / fishMoveSpeed;
-
-            if(this.y > this.pointToMove)
-            {
-                this.y -= speed;
-            }
-            else if(this.y < this.pointToMove)
-            {
-                this.y += speed;
-            }
-
-            this.isPointReached();
-
-        }
-        
-        obj.getNewWeight = function()
-        {
-            this.weight = getRandomNum(1,3);
-        }
-    }
-
-    return obj;
 }
 
 function loadHandler(e) {
@@ -332,12 +212,12 @@ function progressUpdate()
 
     if(player.y < fish.y && player.y + fishingRodWidth > fish.y)
     {
-        progress += 0.2;    
+        progress += 0.2 + shop.lineBought / 100;    
     }
 
     if (inGame) 
     {
-        progress -= 0.1;
+        progress -= 0.1 - shop.lineBought / 100;
 
         if (fish.pointToMove == null) 
         {
@@ -400,6 +280,8 @@ function fishingGame()
         progress = 25;
     }
 
+    fishingRodWidth = 200 * (Math.pow(1.1,shop.rodBought));
+
     for (var i = 0; i < 2; i++)
     {
         obj = renderList[i];
@@ -455,111 +337,7 @@ var bitingDuration;
 var waitTimeTillBite;
 renderList[2].floatSineCounter = 0;
 
-function floatBitting()
-{
-    for (var f = 0; f < buttonList.length; f++)
-    {
-        var b = buttonList[f];
-        //radius, stroke, fillColor, strokeColor, invisible
-        
-        if(b.ID == "BITE")
-        {
-        b.drawButon(20, 1, "0", "0", true, "");
-        }
-        else
-        {
-            b.drawButon(30,5,"#4dd1b5","#36b59a", false);
-        }
-    }
 
-    rF = renderList[2];
-    wtrBg = renderList[3];
-
-    rF.floatSineCounter += 0.03;
-
-    ctx.fillStyle = "#007697";
-    ctx.fillRect(wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
-
-    if (!waitingForBite)
-    {
-        waitTimeTillBite = getRandomNum(4, 8) * 1000;
-        currentDate = Date.now() + waitTimeTillBite;
-        waitingForBite = true;
-        initialBite = true;
-    }
-
-    if (currentDate + waitTimeTillBite < Date.now())
-    {
-        waitingForBite = false;
-        if (initialBite)
-        {
-            initialBite = false;
-            bitingDuration = getRandomNum(1.5, 3) * 1000;
-            bittingStartTime = bitingDuration + Date.now();
-        }
-    }
-
-    if (bittingStartTime + bitingDuration > Date.now())
-    {
-        //console.log("bittinmg");
-        biting = true;
-    }
-    else
-    {
-        //console.log("NOOOOT BITTING");
-        biting = false;
-    }
-
-    if (biting)
-    {
-        rF.weight = 5;
-        rF.objMoveSpeed = 10;
-        rF.moveMax = 600;
-        rF.moveMin = 440;
-        rF.fishOffsetBounce = 100;
-
-        if (rF.pointToMove == null) 
-        {
-            rF.getNewPoint();
-        }
-        else
-        {
-            if (rF.isPointReached())
-            {
-                rF.getNewPoint()
-            }
-            else
-            {
-                rF.moveToPoint();
-            }
-        }
-        //console.log("BITTTING");
-        rF.floatAtDeafult = false;
-    }
-    else
-    {
-        rF.weight = 3;
-        rF.objMoveSpeed = 60;
-
-        if(!rF.floatAtDeafult)
-        {
-            rF.pointToMove = 425;
-            rF.moveToPoint();
-        }
-     
-        if(rF.isPointReached() && !rF.floatAtDeafult)
-        {
-            rF.floatAtDeafult = true;
-        }
-
-        if(rF.floatAtDeafult)
-        {
-            rF.y += Math.sin(rF.floatSineCounter) / 4.2;
-            rF.moveToPoint();
-        }
-       
-    }
-}
 
 function newButton(ID,x, y, width, height, text, onClickFunc)
 {
@@ -594,45 +372,131 @@ function newButton(ID,x, y, width, height, text, onClickFunc)
 
         if(invisible)
         {
-            ctx.globalAlpha = 0;
+            
         }
         else
         {
-            ctx.globalAlpha = 1;
-        }
-
-        ctx.lineJoin = "round";
+            ctx.lineJoin = "round";
         ctx.lineWidth = stroke;
         ctx.fillStyle = fillColor;
         ctx.strokeStyle = strokeColor;
 
-        var sidePadding = this.width / 6;
-        var textSpace = this.width - sidePadding;
-        var fontSize;
-
+        
+        fontSize = this.height * 0.5;
+        ctx.font = fontSize + "px Roboto";
+        
+        var textSpace;
+        var gap;
         if (this.text.length > 0)
         {
-            var wC = textSpace / this.text.length;
-            fontSize = wC * 2.04;
-            ctx.font = fontSize + "px Roboto";
+            //golden value 2.04 || tempFontSize = wC * 2.04;
+            // wC = textSpace / this.text.length
+            
+            var wC = fontSize / 2.04;
+            textSpace = this.text.length * wC
+            gap = this.width - textSpace;
         }
+        
 
-        this.height = fontSize * 2.5;
-
+        //this.height = fontSize * 2;
+    
 
         ctx.strokeRect((this.x + radius/2), this.y+(radius/2), this.width - radius, this.height - radius);
         ctx.fillRect(this.x+(radius/2), this.y+(radius/2), this.width - radius, this.height - radius);
         
         ctx.fillStyle = "black";
-        ctx.fillText(this.text, this.x + sidePadding / 2, this.y + fontSize * 1.625);
-
-        if(this.text == "Button2 Button2")
-        {
-            console.log(fontSize);
+        this.topPadding = fontSize * 1.3;
+        ctx.fillText(this.text, this.x + gap * 0.45, this.y + this.topPadding);
         }
 
         ctx.restore();
+        
     }
 
     return butt;
 }
+
+function shopControl()
+{
+    for (var f = 0; f < buttonList.length; f++)
+    {
+        var price = shop.deafultPrice;
+
+        var b = buttonList[f];
+        //radius, stroke, fillColor, strokeColor, invisible
+        
+        if(b.ID == "BITE")
+        {
+            b.drawButon(0, 0, "0", "0", true);
+        }
+        
+        if(b.ID == "ROD")
+        {
+            ctx.save()
+            b.drawButon(30,20,"#4dd1b5","#36b59a", false);
+            
+            ctx.font = "30px Roboto"
+            ctx.fillText("New Rod: " + (price * Math.pow(shop.priceCoef,shop.rodBought)) ,b.x + b.width * 1.2, b.y + b.topPadding);
+            ctx.restore();
+        }
+
+        if(b.ID == "BAIT")
+        {
+            ctx.save()
+            b.drawButon(30,20,"#4dd1b5","#36b59a", false);
+            
+            ctx.font = "30px Roboto"
+            ctx.fillText("New Bait: " + (price * Math.pow(shop.priceCoef,shop.baitBought)) ,b.x + b.width * 1.2, b.y + b.topPadding);
+            ctx.restore();
+        }
+
+        if(b.ID == "LINE")
+        {
+            ctx.save()
+            b.drawButon(30,20,"#4dd1b5","#36b59a", false);
+            
+            ctx.font = "30px Roboto"
+            ctx.fillText("New Line: " + (price * Math.pow(shop.priceCoef,shop.lineBought)) ,b.x + b.width * 1.2, b.y + b.topPadding);
+            ctx.restore();
+        }
+            
+    }
+}
+
+function buyRod()
+{
+    player = renderList[0];
+    var price = shop.deafultPrice + Math.pow(shop.priceCoef,shop.rodBought) * 10;
+
+    if(player.money >= price)
+    {   
+        player.money - price;
+    }
+}
+
+function buyLine()
+{
+    player = renderList[0];
+    var price = shop.deafultPrice + Math.pow(shop.priceCoef,shop.lineBought) * 10;
+
+    if(player.money >= price)
+    {   
+        player.money - price;
+    }
+}
+
+function buyBait()
+{
+    player = renderList[0];
+    var price = shop.deafultPrice + Math.pow(shop.priceCoef,shop.baitBought) * 10;
+
+    if(player.money >= price)
+    {   
+        console.log("ddddddd");
+        player.money -= price;
+    }
+}
+
+
+
+
