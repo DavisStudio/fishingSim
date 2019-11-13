@@ -104,9 +104,9 @@ var biteSplash = new Audio('sounds/biteNot.mp3');
 biteSplash.volume = 1;
 
 var progressLossReelSound = new Audio('sounds/progresLossReel.mp3');
-
+progressLossReelSound.volume = 0.5;
 var progressGainReelSound = new Audio('sounds/progresGainReel.mp3');
-
+progressGainReelSound.volume = 0.5;
 
 playerStats =
 {
@@ -299,12 +299,12 @@ function progressUpdate()
 
     ctx.fillText(Math.floor(progress), 410, 40);
     
+    ctx.fillRect(50, 50,  800 * progress / 100, 50);
+
     ctx.beginPath()
     ctx.lineWidth = 5;
     ctx.rect(50,50, 800, 50);
     ctx.stroke();
-
-    ctx.fillRect(50, 50,  800 * progress / 100, 50);
 }
 
 function fishingGame()

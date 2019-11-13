@@ -25,7 +25,7 @@ function makeObject(ID, x, y, width, height, color)
             obj.fishOffsetBounce = 200;
             obj.pointToMove = null;
             obj.weight = getRandomNum(shop.baitBought - 0.8, shop.baitBought * 1.5);
-            obj.moveMin = playetTopMargin + 10;
+            obj.moveMin = playetTopMargin + 30;
             obj.moveMax = playerBottomMargin - 35;
             obj.fishMoveSpeed = 60;
         }
