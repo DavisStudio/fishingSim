@@ -11,14 +11,14 @@ var mouseDown = false;
 var buttonList = [];
 
 var shop = {
-    deafultPrice: 5,
+    deafultPrice: 3,
     priceCoef: 1.2,
     baitBought: 1,
     rodBought: 1,
     lineBought: 1
 }
 
-var playetTopMargin = 120, playerBottomMargin = 850;
+var playetTopMargin = 130, playerBottomMargin = 850;
 var bumpForce = 4;
 var drag = 0.99;
 var gravity = 0.22;
@@ -26,10 +26,10 @@ var bounce = 0.55;
 
 var fishMoveSpeed = 70;
 
-var fishingRodWidth = 200;
+var fishingRodWidth = 130;
 
 var progress = 25;
-var inGame = true;
+var inGame = false;
 var newGame = true;
 
 var initialBite = true;
@@ -43,7 +43,7 @@ var FISH = "FISH";
 var RODFLOAT = "RODFLOAT"
 
 
-var minLoad = 4, loadCount = 0;
+var minLoad = 6, loadCount = 0;
 
 canvas.addEventListener("mousedown", clickOnCanvas);
 canvas.addEventListener("mouseup", mouseUpHandler);
@@ -84,24 +84,55 @@ renderList[4].image = new Image();
 renderList[4].image.addEventListener('load', loadHandler, false);
 renderList[4].image.src = "images/uWtrGradient.png";
 
-var coin = new Audio('sounds/coin.wav');
+var shopBg = {};
+shopBg.image = new Image();
+shopBg.image.addEventListener('load', loadHandler, false);
+shopBg.image.src = "images/shopBg.png";
+
+var bg = {};
+bg.image = new Image();
+bg.image.addEventListener('load', loadHandler, false);
+bg.image.src = "images/bG.png";
+
+var bgMusic = new Audio('sounds/bgMusic.mp3')
+bgMusic.volume = 0.1;
+
+var coin = new Audio('sounds/coin.mp3');
 coin.volume = 0.5;
+
+var biteSplash = new Audio('sounds/biteNot.mp3');
+biteSplash.volume = 1;
+
+var progressLossReelSound = new Audio('sounds/progresLossReel.mp3');
+
+var progressGainReelSound = new Audio('sounds/progresGainReel.mp3');
+
+
+playerStats =
+{
+    fishCaught: 0,
+    biggestFish: 0,
+    lastFish: 0
+}
 
 function render()
 {
     ctx.clearRect(0, 0, 1600, 900);
+    
     player = renderList[0];
     var grd = renderList[4];
     var wtrBg = renderList[3];
+    bgMusic.play();
+
+    ctx.fillStyle = "#007697";
+    ctx.fillRect(wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
+    ctx.drawImage(bg.image, 0, 0, bg.image.width * 5, bg.image.height * 5);
 
     if(inGame)
     {
-        ctx.fillStyle = "#007697";
-        ctx.fillRect(wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
-
         ctx.drawImage(wtrBg.image, wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
         ctx.drawImage(grd.image, grd.x, grd.y + 80, grd.image.width * 5, grd.image.height * 5);
-
+        
         ctx.globalAlpha = 0.3;
         ctx.fillStyle = "white";
         ctx.fillRect(20,20, canvas.width - 40, canvas.height - 40);
@@ -111,6 +142,9 @@ function render()
     }
     else
     {
+        ctx.drawImage(shopBg.image, 20, 75, shopBg.image.width * 5, shopBg.image.height * 5);
+        ctx.drawImage(shopBg.image, 460, 75, shopBg.image.width * 5, shopBg.image.height * 5);
+
         floatBitting();
         
         if (!(player.money == player.moneyDisplayed))
@@ -129,27 +163,17 @@ function render()
             }
             else if (player.money > player.moneyDisplayed)
             {
-                //console.log(Math.floor(player.moneyDisplayed) % 1);
-
-                //console.log(Math.floor(player.moneyAdd * 1000) / 1000);
-                if(Math.floor(player.moneyAdd * 1000) / 1000 % 0.01 == 0)
-                {
-                    var newCoin = coin.cloneNode();
-                    newCoin.volume = 0.5;
-                    newCoin.play();
-                }
-
                 player.moneyDisplayed += player.moneyAdd;
             }
         }
-       
+    
     ctx.drawImage(rF.image, rF.x, rF.y, rF.width * 3.2, rF.height * 3.2);
     ctx.drawImage(wtrBg.image, wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
 
     ctx.drawImage(grd.image, grd.x, grd.y + 80, grd.image.width * 5, grd.image.height * 5);
 
+    ctx.fillStyle = "black";
     ctx.fillText("Money: " + Math.floor((player.moneyDisplayed / 10) * 100) / 100, 20, 50);
-    console.log(player.money + " Money ------- Displayed money: " + player.moneyDisplayed);
     }
 
     requestAnimationFrame(render);
@@ -175,7 +199,7 @@ function clickOnCanvas(e)
 
             if(biting)
             {
-                if(but.ID = "BITE" && but.isClicked(mouseX,mouseY))
+                if(but.ID == "BITE" && but.isClicked(mouseX,mouseY))
                 {
                 newGame = true;
                 inGame = true;
@@ -212,12 +236,17 @@ function progressUpdate()
 
     if(player.y < fish.y && player.y + fishingRodWidth > fish.y)
     {
-        progress += 0.2 + shop.lineBought / 100;    
+        progress += 0.18 + (shop.lineBought / 100) * 0.4;    
+        progressGainReelSound.play();
+    }
+    else
+    {
+        progressLossReelSound.play();
     }
 
     if (inGame) 
     {
-        progress -= 0.1 - shop.lineBought / 100;
+        progress -= (0.11 - (shop.lineBought / 100) * 0.2);
 
         if (fish.pointToMove == null) 
         {
@@ -242,6 +271,14 @@ function progressUpdate()
             inGame = false;
             waitingForBite = false;
             player.money += Math.floor(fish.weight * player.profitCoef * 100) / 100;
+            coin.play();
+            playerStats.lastFish = Math.floor(renderList[1].weight * 100) / 100;
+            
+            if(playerStats.lastFish > playerStats.biggestFish)
+            {
+                playerStats.biggestFish = playerStats.lastFish;
+            }
+
         }
     }
 
@@ -263,7 +300,7 @@ function progressUpdate()
     ctx.fillText(Math.floor(progress), 410, 40);
     
     ctx.beginPath()
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 5;
     ctx.rect(50,50, 800, 50);
     ctx.stroke();
 
@@ -279,8 +316,8 @@ function fishingGame()
         inGame = true;
         progress = 25;
     }
-
-    fishingRodWidth = 200 * (Math.pow(1.1,shop.rodBought));
+    
+    player.height = fishingRodWidth;
 
     for (var i = 0; i < 2; i++)
     {
@@ -325,7 +362,7 @@ function fishingGame()
             ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
 
             ctx.beginPath()
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 5;
             ctx.rect(380, playetTopMargin, 100, playerBottomMargin - playetTopMargin);
             ctx.stroke();
         }
@@ -366,51 +403,47 @@ function newButton(ID,x, y, width, height, text, onClickFunc)
 
     // http://jsfiddle.net/robhawkes/gHCJt/
     //https://grtcalculator.com/math/
-    butt.drawButon = function(radius, stroke, fillColor, strokeColor, invisible)
+    butt.drawButon = function (radius, stroke, fillColor, strokeColor, invisible)
     {
         ctx.save();
 
-        if(invisible)
-        {
-            
-        }
-        else
+        if (!invisible)
         {
             ctx.lineJoin = "round";
-        ctx.lineWidth = stroke;
-        ctx.fillStyle = fillColor;
-        ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = stroke;
+            ctx.fillStyle = fillColor;
+            ctx.strokeStyle = strokeColor;
 
-        
-        fontSize = this.height * 0.5;
-        ctx.font = fontSize + "px Roboto";
-        
-        var textSpace;
-        var gap;
-        if (this.text.length > 0)
-        {
-            //golden value 2.04 || tempFontSize = wC * 2.04;
-            // wC = textSpace / this.text.length
-            
-            var wC = fontSize / 2.04;
-            textSpace = this.text.length * wC
-            gap = this.width - textSpace;
-        }
-        
 
-        //this.height = fontSize * 2;
-    
+            fontSize = this.height * 0.5;
+            ctx.font = fontSize + "px Roboto";
 
-        ctx.strokeRect((this.x + radius/2), this.y+(radius/2), this.width - radius, this.height - radius);
-        ctx.fillRect(this.x+(radius/2), this.y+(radius/2), this.width - radius, this.height - radius);
-        
-        ctx.fillStyle = "black";
-        this.topPadding = fontSize * 1.3;
-        ctx.fillText(this.text, this.x + gap * 0.45, this.y + this.topPadding);
+            var textSpace;
+            var gap;
+            if (this.text.length > 0)
+            {
+                //golden value 2.04 || tempFontSize = wC * 2.04;
+                // wC = textSpace / this.text.length
+
+                var wC = fontSize / 2.04;
+                textSpace = this.text.length * wC
+                gap = this.width - textSpace;
+            }
+
+
+            //this.height = fontSize * 2;
+
+
+            ctx.strokeRect((this.x + radius / 2), this.y + (radius / 2), this.width - radius, this.height - radius);
+            ctx.fillRect(this.x + (radius / 2), this.y + (radius / 2), this.width - radius, this.height - radius);
+
+            ctx.fillStyle = "black";
+            this.topPadding = fontSize * 1.3;
+            ctx.fillText(this.text, this.x + gap * 0.45, this.y + this.topPadding);
         }
 
         ctx.restore();
-        
+
     }
 
     return butt;
@@ -418,82 +451,101 @@ function newButton(ID,x, y, width, height, text, onClickFunc)
 
 function shopControl()
 {
+    ctx.fillStyle = "white";
     for (var f = 0; f < buttonList.length; f++)
     {
         var price = shop.deafultPrice;
 
         var b = buttonList[f];
         //radius, stroke, fillColor, strokeColor, invisible
-        
-        if(b.ID == "BITE")
+
+        if (b.ID == "BITE")
         {
             b.drawButon(0, 0, "0", "0", true);
         }
-        
-        if(b.ID == "ROD")
+
+        if (b.ID == "ROD")
         {
             ctx.save()
-            b.drawButon(30,20,"#4dd1b5","#36b59a", false);
-            
-            ctx.font = "30px Roboto"
-            ctx.fillText("New Rod: " + (price * Math.pow(shop.priceCoef,shop.rodBought)) ,b.x + b.width * 1.2, b.y + b.topPadding);
+            b.drawButon(30, 20, "#4dd1b5", "#36b59a", false);
+
+            ctx.font = "28px Roboto"
+            ctx.fillText("New Rod: " + Math.floor((price * Math.pow(shop.priceCoef + 0.3, shop.rodBought))* 100) / 100, b.x + b.width * 1.2, b.y + b.topPadding);
             ctx.restore();
         }
 
-        if(b.ID == "BAIT")
+        if (b.ID == "BAIT")
         {
             ctx.save()
-            b.drawButon(30,20,"#4dd1b5","#36b59a", false);
-            
-            ctx.font = "30px Roboto"
-            ctx.fillText("New Bait: " + (price * Math.pow(shop.priceCoef,shop.baitBought)) ,b.x + b.width * 1.2, b.y + b.topPadding);
+            b.drawButon(30, 20, "#4dd1b5", "#36b59a", false);
+
+            ctx.font = "28px Roboto"
+            ctx.fillText("New Bait: " +  Math.floor(shop.deafultPrice * Math.pow(shop.priceCoef + 0.13,shop.baitBought) * 100) / 100, b.x + b.width * 1.2, b.y + b.topPadding);
             ctx.restore();
         }
 
-        if(b.ID == "LINE")
+        if (b.ID == "LINE")
         {
             ctx.save()
-            b.drawButon(30,20,"#4dd1b5","#36b59a", false);
-            
-            ctx.font = "30px Roboto"
-            ctx.fillText("New Line: " + (price * Math.pow(shop.priceCoef,shop.lineBought)) ,b.x + b.width * 1.2, b.y + b.topPadding);
+            b.drawButon(30, 20, "#4dd1b5", "#36b59a", false);
+
+            ctx.font = "28px Roboto"
+            ctx.fillText("New Line: " + Math.floor((price * Math.pow(shop.priceCoef + 0.2, shop.lineBought))* 100) / 100, b.x + b.width * 1.2, b.y + b.topPadding);
             ctx.restore();
         }
-            
+
     }
+}
+
+function updateStats()
+{
+    ctx.save();
+
+    //ctx.text = "60px Roboto";
+    ctx.fillText("Stats", 612, 120, 400);
+
+    ctx.font = "28px Roboto";
+    ctx.fillText("Last fish caught: " + playerStats.lastFish + "Kg", 480, 160);
+    ctx.fillText("Biggest Fish: " + playerStats.biggestFish + "Kg", 480, 210);
+
+    ctx.restore();
 }
 
 function buyRod()
 {
     player = renderList[0];
-    var price = shop.deafultPrice + Math.pow(shop.priceCoef,shop.rodBought) * 10;
+    var price = shop.deafultPrice * Math.pow(shop.priceCoef + 0.19,shop.rodBought) * 10;
+    console.log(price);
 
     if(player.money >= price)
     {   
-        player.money - price;
+        player.money -= price;
+        shop.rodBought++;
+        fishingRodWidth = fishingRodWidth + 25;
     }
 }
 
 function buyLine()
 {
     player = renderList[0];
-    var price = shop.deafultPrice + Math.pow(shop.priceCoef,shop.lineBought) * 10;
+    var price = shop.deafultPrice * Math.pow(shop.priceCoef + 0.17,shop.lineBought) * 10;
 
     if(player.money >= price)
     {   
-        player.money - price;
+        player.money -= price;
+        shop.lineBought++;
     }
 }
 
 function buyBait()
 {
     player = renderList[0];
-    var price = shop.deafultPrice + Math.pow(shop.priceCoef,shop.baitBought) * 10;
+    var price = shop.deafultPrice * Math.pow(shop.priceCoef + 0.13,shop.baitBought) * 10;
 
     if(player.money >= price)
     {   
-        console.log("ddddddd");
         player.money -= price;
+        shop.baitBought++;
     }
 }
 

@@ -12,7 +12,7 @@ function makeObject(ID, x, y, width, height, color)
 
     if(ID == PLAYER)
     {
-        obj.money = 0;
+        obj.money = 100;
         obj.moneyDisplayed = 0;
         obj.profitCoef = 25;
         obj.moneyAdd = 0;
@@ -24,10 +24,10 @@ function makeObject(ID, x, y, width, height, color)
         {
             obj.fishOffsetBounce = 200;
             obj.pointToMove = null;
-            obj.weight = getRandomNum(shop.baitBought, shop.baitBought * 1.5 + 1);
-            obj.moveMin = playetTopMargin;
-            obj.moveMax = playerBottomMargin;
-            obj.fishMoveSpeed = 70;
+            obj.weight = getRandomNum(shop.baitBought - 0.8, shop.baitBought * 1.5);
+            obj.moveMin = playetTopMargin + 10;
+            obj.moveMax = playerBottomMargin - 35;
+            obj.fishMoveSpeed = 60;
         }
 
         if(ID == RODFLOAT)
@@ -49,24 +49,28 @@ function makeObject(ID, x, y, width, height, color)
             }
             
             var topOffset, bottomOffset;
+            var bounceCoef = this.weight * 0.85;
 
-            if(this.y - this.fishOffsetBounce * this.weight < this.moveMin)
+
+            if(this.y - this.fishOffsetBounce * bounceCoef < this.moveMin)
             {
                 topOffset = this.moveMin;
+                bottomOffset += 50;
             }
             else
             {
-                topOffset = this.y - this.fishOffsetBounce * this.weight;
+                topOffset = this.y - this.fishOffsetBounce * bounceCoef * 0.5;
             }
 
             
-            if(this.y + this.fishOffsetBounce * this.weight > this.moveMax)
+            if(this.y + this.fishOffsetBounce * bounceCoef > this.moveMax)
             {
                 bottomOffset = this.moveMax;
+                topOffset -= 50;
             }
             else
             {
-                bottomOffset = this.y + this.fishOffsetBounce * this.weight;
+                bottomOffset = this.y + this.fishOffsetBounce * bounceCoef;
             }
 
             this.pointToMove = getRandomNum(bottomOffset, topOffset);
@@ -88,8 +92,8 @@ function makeObject(ID, x, y, width, height, color)
             //fishMoveSpeed *= this.weight;
 
             var distanceLeft = Math.abs(this.pointToMove - this.y); 
-            
-            var speed = distanceLeft / fishMoveSpeed;
+
+            var speed = distanceLeft / (fishMoveSpeed - this.weight * 2.5);
 
             if(this.y > this.pointToMove)
             {
@@ -106,7 +110,7 @@ function makeObject(ID, x, y, width, height, color)
         
         obj.getNewWeight = function()
         {
-            this.weight = getRandomNum(1,3);
+            this.weight = getRandomNum(0.2 * shop.baitBought * 0.5, shop.baitBought * 1.2);
         }
     }
 

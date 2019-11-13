@@ -1,14 +1,12 @@
 function floatBitting()
 {
     shopControl();
-
+    updateStats();
+    
     rF = renderList[2];
     wtrBg = renderList[3];
 
     rF.floatSineCounter += 0.03;
-
-    ctx.fillStyle = "#007697";
-    ctx.fillRect(wtrBg.x, wtrBg.y, wtrBg.image.width * 5, wtrBg.image.height * 5);
 
     if (!waitingForBite)
     {
@@ -47,6 +45,8 @@ function floatBitting()
         rF.moveMax = 600;
         rF.moveMin = 440;
         rF.fishOffsetBounce = 100;
+
+        biteSplash.play();
 
         if (rF.pointToMove == null) 
         {
