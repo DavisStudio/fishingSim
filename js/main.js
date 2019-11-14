@@ -549,6 +549,10 @@ function buyBait()
     }
 }
 
+function giveMoney(amount)
+{
+    player.money += amount * 10;
+}
 
 
 
